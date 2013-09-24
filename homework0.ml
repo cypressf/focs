@@ -68,7 +68,7 @@ let add (n1, n2) = match (n1, n2) with
 	| (F f1, F f2) -> F (f1 +. f2)
 	| (F f1, I i2) -> F (f1 +. float(i2));;
 
-(* part 5 *)
+(* part 5 is not complete *)
 type bConst = One | Zero
 type bExpr =
 	Const of bConst
@@ -78,18 +78,14 @@ type bExpr =
 	| Not of bExpr
 
 
-(* let rec vars (expr, var_list) =
-	if expr = Const
-		[]
-	else if expr = Var
-		[v]
-	else if expr = And
-	Const c -> []
-	| Var v -> [v]
-	| And (a, b) -> vars (a) @ vars (b)
-	| Or (a, b) -> vars (a) :: vars (b)
-	| Not a -> vars (a)
-	| Var 
-
+(* let rec vars (expr) = match expr with
+	| [] -> []
+	| expr -> get_vars(expr, [])
+	and let rec get_vars (node, vars_found) = match node with
+		| Var v -> [v] @ vars_found
+		| And (a, b) -> get_vars (a, vars_found) @ get_vars (b, vars_found)
+		| Or (a, b) -> get_vars (a, vars_found) @ get_vars (b, vars_found)
+		| Not a -> get_vars (a, vars_found)
+		| Const c -> [];;
  *)
 
