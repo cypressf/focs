@@ -225,7 +225,7 @@ let rec extendedTransition (dfa, state, cs) = match cs with
  *)
 
 let accept (dfa, input) = 
-  raise (Unimplemented("accept"))
+  isFinal(dfa, extendedTransition(dfa, dfa.start, explode(input)))
   
 
 
