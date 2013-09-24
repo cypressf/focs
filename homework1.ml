@@ -209,8 +209,9 @@ let transition (dfa,state,input) =
  *
  *)
 
-let rec extendedTransition (dfa, state, cs) = 
-  raise (Unimplemented("extendedTransition"))
+let rec extendedTransition (dfa, state, cs) = match cs with
+  | [] -> state
+  | head::tail -> extendedTransition (dfa, transition(dfa, state, head), tail)
 
 
 (*
