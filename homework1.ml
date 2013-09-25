@@ -264,3 +264,51 @@ let printLanguage (dfa,n) =
   in
     printList(language(dfa,n))
 
+(* Excercise 3 *)
+
+(* (a) Code a function member of type
+'a * 'a list -> bool
+where member(a,l) is true if and only if a is an element of l.
+*)
+let rec member (item, lst) = match lst with
+  | [] -> false
+  | head::tail when (head = item) -> true
+  | head::tail -> member (item, tail)
+
+(* (b) Code a function difference of type
+'a list * 'a list -> 'a list
+where difference(l1,l2) returns the list of all elements of l1 that are not elements
+of l2. *)
+let rec difference (list1, list2) = match list1 with
+  | [] -> []
+  | head::tail when member(head, list2) -> difference (tail, list2)
+  | head::tail -> head :: difference (tail, list2)
+
+(* (c) Code a function cross of type
+'a list * 'b list -> ('a * 'b) list
+where cross(l1,l2) returns the list of all pairs composed of an element of l1 paired
+with an element of l2. *)
+(* let cross_helper (list1, list2) = match list1 with
+  | [] -> []
+  | head::tail list1 ::cross_helper(list1, list2)
+
+let get_tuples (element, lst) = match lst with
+  | [] -> []
+  | head::tail -> (element, head) :: get_tuples (element, tail) 
+ *)
+(* (d) Code a function compl of type
+'a dfa -> 'a dfa
+where compl(d) returns a DFA accepting the complement of the language of DFA
+d. *)
+
+(* (d) Code a function compl of type
+'a dfa -> 'a dfa
+where compl(d) returns a DFA accepting the complement of the language of DFA
+d. *)
+
+(* (f) Code a function union of type
+'a dfa * 'b dfa -> ('a * 'b) dfa
+where union(d1,d2) returns the DFA accepting exactly the union of the language
+of DFA d1 and the language of DFA d2.
+ *)
+
