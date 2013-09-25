@@ -288,14 +288,15 @@ let rec difference (list1, list2) = match list1 with
 'a list * 'b list -> ('a * 'b) list
 where cross(l1,l2) returns the list of all pairs composed of an element of l1 paired
 with an element of l2. *)
-(* let cross_helper (list1, list2) = match list1 with
-  | [] -> []
-  | head::tail list1 ::cross_helper(list1, list2)
 
-let get_tuples (element, lst) = match lst with
+let rec get_tuples (element, lst) = match lst with
   | [] -> []
   | head::tail -> (element, head) :: get_tuples (element, tail) 
- *)
+
+let rec cross (list1, list2) = match list1 with
+  | [] -> []
+  | head::tail -> get_tuples(head, list2) @ cross(tail, list2)
+
 (* (d) Code a function compl of type
 'a dfa -> 'a dfa
 where compl(d) returns a DFA accepting the complement of the language of DFA
