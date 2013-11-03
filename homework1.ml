@@ -1,9 +1,10 @@
 
 (* Code for Homework 1 *****************************************)
-
-(* See below for stub functions for the functions you need to code
-   for question (2).
- *)
+(*
+Cypress Frankenfeld
+iamcypress@gmail.com
+For this homework, I worked with Juliana Nazare and Joe Gibson.
+*)
 
 
 
@@ -291,7 +292,7 @@ with an element of l2. *)
 
 let rec getTuples (element, lst) = match lst with
   | [] -> []
-  | head::tail -> (element, head) :: get_tuples (element, tail) 
+  | head::tail -> (element, head) :: getTuples (element, tail) 
 
 let rec cross (list1, list2) = match list1 with
   | [] -> []
@@ -308,11 +309,24 @@ let compl dfa =
      delta = dfa.delta;
      final = difference (dfa.states, dfa.final)}
 
+(* (e) Code a function inter of type1
+'a dfa * 'b dfa -> ('a * 'b) dfa
+where inter(d1,d2) returns the DFA accepting exactly the intersection of
+the language of DFA d1 and the language of DFA d2 *)
+let rec getDeltas (lst) = match lst with
+  | [] -> []
+  | ((a1,a2,a3), (b1,b2,b3)) :: tail when a2 = b2 -> ((a1, b1), a2, (a3, b3)) :: getDeltas(tail)
+  | head :: tail -> getDeltas(tail)
 
-(* (d) Code a function compl of type
-'a dfa -> 'a dfa
-where compl(d) returns a DFA accepting the complement of the language of DFA
-d. *)
+let inter (dfa1, dfa2) = 
+  {
+    alphabet = dfa1.alphabet;   
+    states = cross(dfa1.states, dfa2.states);
+    start = (dfa1.start, dfa2.start);
+    delta = getDeltas(cross(dfa1.delta, dfa2.delta));
+    final = cross(dfa1.final, dfa2.final);
+  }
+
 
 (* (f) Code a function union of type
 'a dfa * 'b dfa -> ('a * 'b) dfa
@@ -320,3 +334,11 @@ where union(d1,d2) returns the DFA accepting exactly the union of the language
 of DFA d1 and the language of DFA d2.
  *)
 
+let union (dfa1, dfa2) = 
+  {
+    alphabet = dfa1.alphabet;   
+    states = cross(dfa1.states, dfa2.states);
+    start = (dfa1.start, dfa2.start);
+    delta = getDeltas(cross(dfa1.delta, dfa2.delta));
+    final = cross(dfa1.final, dfa2.states) @ cross(difference(dfa1.states, dfa1.final), dfa2.final);
+  }
