@@ -511,8 +511,67 @@ let string_of_state_int_int_opt st =
 
 (* IMPLEMENT THE FOLLOWING FUNCTIONS FOR PROBLEM 2 *)
 
-let same_pair () = fail ("Function same_pair not implemented")
+(*
+Return a TM that decides the language {u#u | u is in digits}
+The TM must use structured states (so much easier)
+*)
+let same_pair () =
+  let delta (p,a) = match p, a with
+    | ("start", None), ">" -> ("start", None), ">", Right
+    | ("start", None), digit when isDigit digit -> ("check first number", None), digit, Right
+        
+    | ("check first number", None), digit when isDigit digit -> ("check first number", None), digit, Right
+    | ("check first number", None), "#" -> ("check second number", None), "#", Right
 
+    | ("check second number", None), digit when isDigit digit -> ("check second number", None), digit, Right
+    | ("check second number", None), "_" -> ("x first digit", None), "_", Left
+
+    | ("x first digit", None), digit when isDigit digit -> ("skip to # left", Some digit), "x", Left
+    | ("x first digit", None), "#" -> ("more digits?", None), "#", Left
+
+    | ("more digits?", None), "x" -> ("more digits?", None), "x", Left
+    | ("more digits?", None), ">" -> ("acc", None), ">", Right
+
+    | ("skip to # left", Some digit), d when isDigit d -> ("skip to # left", Some digit), d, Left
+    | ("skip to # left", Some digit), "#" -> ("find digit", Some digit), "#", Left
+
+    | ("find digit", Some digit), "x" -> ("find digit", Some digit), "x", Left
+    | ("find digit", Some digit), d when d = digit -> ("rewind 1", None), "x", Right
+
+    | ("rewind 1", None), "x" -> ("rewind 1", None), "x", Right
+    | ("rewind 1", None), "#" -> ("rewind 2", None), "#", Right
+    | ("rewind 2", None), d when isDigit d -> ("rewind 2", None), d, Right
+    | ("rewind 2", None), "x" -> ("x first digit", None), "x", Left
+
+    | ("acc", None), sym -> (("acc", None), sym, Right)
+    | _, sym -> ("rej", None), sym, Right
+  in
+  TM.build string_of_state_sym_opt 
+  {
+    states = crossNone [
+      "start";
+      "check first number";
+      "check second number";
+      "x first digit";
+      "more digits?";
+      "rewind 1";
+      "rewind 2";
+      "acc";
+      "rej"
+    ] @
+    crossSome [
+      "skip to # left";
+      "find digit"
+    ] digits;
+    input_alph = digits;
+    tape_alph = digits @ ["_"; ">"; "x"];
+    leftmost = ">";
+    blank = "_";
+    delta;
+    start = ("start", None);
+    accept = ("acc", None);
+    reject = ("rej", None)
+  }
 
 let pred_pair () = fail ("Function pred_pair not implemented")
 
