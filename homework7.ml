@@ -479,6 +479,7 @@ let evenOddSequence_tagged =
 
 
 let digits = ["0"; "1"; "2"; "3"; "4"; "5"; "6"; "7"; "8"; "9"]
+let intDigits = [0; 1; 2; 3; 4; 5; 6; 7; 8; 9]
 let isDigit c = List.mem c digits
 
 let crossNone xs = 
@@ -489,6 +490,17 @@ let cross2 xs ys =
 
 let crossSome xs ys = 
   cross2 xs (List.map (fun y -> Some y) ys)
+
+let crossSomeNone xs ys =
+  List.fold_right (fun x r -> (List.map (fun y -> (x, Some y, None)) ys)@r) xs []
+
+let crossNoneNone = List.map (fun x -> (x, None, None))
+
+let crossSomeSome xs ys zs =
+  List.fold_right 
+  (fun x r -> (List.fold_right 
+                 (fun y r -> (List.map (fun z -> (x, Some y, Some z)) zs)@r) ys [])@r)
+     xs []
 
 let cross3 xs ys zs =   
   List.fold_right 
@@ -526,14 +538,14 @@ let same_pair () =
     | ("check second number", None), digit when isDigit digit -> ("check second number", None), digit, Right
     | ("check second number", None), "_" -> ("x first digit", None), "_", Left
 
-    | ("x first digit", None), digit when isDigit digit -> ("skip to # left", Some digit), "x", Left
+    | ("x first digit", None), digit when isDigit digit -> ("skip to #", Some digit), "x", Left
     | ("x first digit", None), "#" -> ("more digits?", None), "#", Left
 
     | ("more digits?", None), "x" -> ("more digits?", None), "x", Left
     | ("more digits?", None), ">" -> ("acc", None), ">", Right
 
-    | ("skip to # left", Some digit), d when isDigit d -> ("skip to # left", Some digit), d, Left
-    | ("skip to # left", Some digit), "#" -> ("find digit", Some digit), "#", Left
+    | ("skip to #", Some digit), d when isDigit d -> ("skip to #", Some digit), d, Left
+    | ("skip to #", Some digit), "#" -> ("find digit", Some digit), "#", Left
 
     | ("find digit", Some digit), "x" -> ("find digit", Some digit), "x", Left
     | ("find digit", Some digit), d when d = digit -> ("rewind 1", None), "x", Right
@@ -560,7 +572,7 @@ let same_pair () =
       "rej"
     ] @
     crossSome [
-      "skip to # left";
+      "skip to #";
       "find digit"
     ] digits;
     input_alph = digits;
@@ -573,9 +585,73 @@ let same_pair () =
     reject = ("rej", None)
   }
 
-let pred_pair () = fail ("Function pred_pair not implemented")
+let get_new_state carry digit =
+  if carry = 0 then
+    "skip to #", Some (0, digit)
+  else
+    if digit = 9 then
+      "skip to #", Some (1, 0)
+    else
+      "skip to #", Some (0, digit + 1)
 
 
+let pred_pair () =
+  let delta (p,a) = match p, a with
+    | ("start", None), ">" -> ("start", None), ">", Right
+    | ("start", None), digit when isDigit digit -> ("check first number", None), digit, Right
+        
+    | ("check first number", None), digit when isDigit digit -> ("check first number", None), digit, Right
+    | ("check first number", None), "#" -> ("check second number", None), "#", Right
+
+    | ("check second number", None), digit when isDigit digit -> ("check second number", None), digit, Right
+    | ("check second number", None), "_" -> ("x first digit", Some (1, 0)), "_", Left
+
+    | ("x first digit", Some (carry, _)), digit when isDigit digit -> (get_new_state carry (int_of_string digit)), "x", Left
+    | ("x first digit", Some (carry, _)), "#" when carry = 0 -> ("more digits?", None), "#", Left
+
+    | ("more digits?", None), "x" -> ("more digits?", None), "x", Left
+    | ("more digits?", None), ">" -> ("acc", None), ">", Right
+
+    | ("skip to #", Some (carry, digit)), d when isDigit d -> ("skip to #", Some (carry, digit)), d, Left
+    | ("skip to #", Some (carry, digit)), "#" -> ("find digit", Some (carry, digit)), "#", Left
+
+    | ("find digit", Some (carry, digit)), "x" -> ("find digit", Some (carry, digit)), "x", Left
+    | ("find digit", Some (carry, digit)), d when d = string_of_int digit -> ("rewind 1", Some (carry, 0)), "x", Right
+
+    | ("rewind 1", Some (carry, _)), "x" -> ("rewind 1", Some (carry, 0)), "x", Right
+    | ("rewind 1", Some (carry, _)), "#" -> ("rewind 2", Some (carry, 0)), "#", Right
+    | ("rewind 2", Some (carry, _)), d when isDigit d -> ("rewind 2", Some (carry, 0)), d, Right
+    | ("rewind 2", Some (carry, _)), "x" -> ("x first digit", Some (carry, 0)), "x", Left
+
+    | ("acc", None), sym -> (("acc", None), sym, Right)
+    | _, sym -> ("rej", None), sym, Right
+  in
+  TM.build string_of_state_int_int_opt 
+  {
+    states = crossNone [
+      "start";
+      "check first number";
+      "check second number";
+      "more digits?";
+      "acc";
+      "rej"
+    ] @
+    crossSome [
+      "x first digit";
+      "rewind 1";
+      "rewind 2";
+      "skip to #";
+      "find digit";
+    ] (cross2 intDigits intDigits);
+    input_alph = digits;
+    tape_alph = digits @ ["_"; ">"; "x"];
+    leftmost = ">";
+    blank = "_";
+    delta;
+    start = ("start", None);
+    accept = ("acc", None);
+    reject = ("rej", None)
+  }
 
 
 
