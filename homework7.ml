@@ -676,7 +676,8 @@ type 'a tm_desc_S = { states_S : 'a list;
 
 (* IMPLEMENT THE FOLLOWING FUNCTIONS FOR PROBLEM 3 *)
 
-let transf_states m = fail "Function trans_states not implemented"
+let transf_states m = 
+  crossNone m.states_S @ crossSome m.states_S m.states_S
 
 let transf_delta m (st,sym) = fail "Function trans_delta not implemented"
       
