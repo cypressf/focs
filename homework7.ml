@@ -4,6 +4,8 @@
  *
  * Turing Machines (Structured States)
  *
+ Cypress Frankenfeld
+ iamcypress@gmail.com
  *)
 
 
