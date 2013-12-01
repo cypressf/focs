@@ -679,8 +679,21 @@ type 'a tm_desc_S = { states_S : 'a list;
 let transf_states m = 
   crossNone m.states_S @ crossSome m.states_S m.states_S
 
-let transf_delta m (st,sym) = fail "Function trans_delta not implemented"
-      
+let transf_delta m (st,sym) = 
+  let (state, tag) = st in
+  if tag = None then
+    let (new_state, new_sym, direction) = m.delta_S (state, sym) in
+    if direction = S then
+      ((new_state, Some new_state), new_sym, Right)
+    else if direction = L then
+      ((new_state, None), new_sym, Left)
+    else
+      ((new_state, None), new_sym, Right)
+  else
+    let Some new_state = tag in
+    ((new_state, None), sym, Left)
+
+
 let build_S string_of_state m = fail "Function build_S not implemented"
 
 
