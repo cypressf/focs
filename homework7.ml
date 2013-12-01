@@ -689,12 +689,26 @@ let transf_delta m (st,sym) =
       ((new_state, None), new_sym, Left)
     else
       ((new_state, None), new_sym, Right)
-  else
+  else if sym <> m.leftmost_S then
     let Some new_state = tag in
     ((new_state, None), sym, Left)
+  else
+    ((m.reject_S, None), sym, Right)
 
 
-let build_S string_of_state m = fail "Function build_S not implemented"
+let build_S string_of_state m = 
+  let d = transf_delta m in
+  let machine =
+  { states = transf_states m;
+    input_alph = m.input_alph_S;
+    tape_alph = m.tape_alph_S;
+    leftmost = m.leftmost_S;
+    blank = m.blank_S;
+    delta = d;
+    start = (m.start_S, None);
+    accept = (m.accept_S, None);
+    reject = (m.reject_S, None) } in
+  TM.build string_of_state machine
 
 
       
@@ -722,4 +736,3 @@ let test_asbs_desc =
     start_S = "start";
     accept_S = "acc";
     reject_S = "rej" }
-
