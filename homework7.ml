@@ -493,17 +493,6 @@ let cross2 xs ys =
 let crossSome xs ys = 
   cross2 xs (List.map (fun y -> Some y) ys)
 
-let crossSomeNone xs ys =
-  List.fold_right (fun x r -> (List.map (fun y -> (x, Some y, None)) ys)@r) xs []
-
-let crossNoneNone = List.map (fun x -> (x, None, None))
-
-let crossSomeSome xs ys zs =
-  List.fold_right 
-  (fun x r -> (List.fold_right 
-                 (fun y r -> (List.map (fun z -> (x, Some y, Some z)) zs)@r) ys [])@r)
-     xs []
-
 let cross3 xs ys zs =   
   List.fold_right 
     (fun x r -> (List.fold_right 
