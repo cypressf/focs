@@ -102,13 +102,38 @@ let rec lams xs t =
  *
  *)
 
-let subst t1 v t2 = fail "Function subst not implemented"
+let rec subst t1 v t2 = match t1 with
+    | Var x -> 
+        if x = v then
+            t2
+        else
+            Var x
+    | Lam(x, t) ->
+        if x = v || List.mem x (fv t2) then
+            Lam(x, t)
+        else
+            Lam(x, subst t v t2)
+    | App(t, u) -> App(subst t v t2, subst u v t2)
 
-let has_redex t = fail "Function has_redex not implemented"
+let rec has_redex t = match t with
+    | App(Lam(_,_), _) -> true
+    | Var _ -> false
+    | Lam(x, t) -> has_redex t
+    | App(t1, t2) -> has_redex t1 || has_redex t2
 
-let reduce_once t = fail "Function reduce_once not implemented"
+let rec reduce_once t = match t with
+    | App(Lam(x, m), n) -> subst m x n
+    | App(m, p) when has_redex m -> App(reduce_once m, p)
+    | App(p, m) when has_redex m -> App(p, reduce_once m)
+    | Lam(x, m) when has_redex m -> Lam(x, reduce_once m)
+    | x -> x
 
-let rec reduce t = fail "Function reduce not implemented"
+let rec reduce t =
+    let t_reduced = reduce_once t in
+    if t_reduced = t then
+        t
+    else
+        reduce t_reduced
 
 
 
@@ -147,35 +172,35 @@ let two_L = App (succ_L, one_L)
 let three_L = App (succ_L, two_L)
 
 let plus_L = lams ["m";"n";"f";"x"] (App (App (Var "m", Var "f"),
-					  App (App (Var "n", Var "f"), 
-					       Var "x")))
+                      App (App (Var "n", Var "f"), 
+                           Var "x")))
 
 let times_L = lams ["m";"n";"f";"x"] (App (App (Var "m",
-						App (Var "n", Var "f")),
-					   Var "x"))
+                        App (Var "n", Var "f")),
+                       Var "x"))
 
 let iszero_L = Lam ("n", apps [Var "n"; Lam ("x",false_L); true_L])
 
 let pred_L = lams ["n";"f";"x"] (apps [ Var "n";
-					lams ["g";"h"] (App (Var "h",
-							     App (Var "g",
-								  Var "f")));
-					Lam ("u", Var "x");
-					Lam ("u", Var "u")])
+                    lams ["g";"h"] (App (Var "h",
+                                 App (Var "g",
+                                  Var "f")));
+                    Lam ("u", Var "x");
+                    Lam ("u", Var "u")])
 
 (* Recursion *)
 
 let y_L = Lam ("f", App (Lam ("x", App (Var "f", App (Var "x", Var "x"))),
-			 Lam ("x", App (Var "f", App (Var "x", Var "x")))))
+             Lam ("x", App (Var "f", App (Var "x", Var "x")))))
 
 (* Factorial (using recursion) *)
 
 let f_fact_L = lams ["f";"n"] (apps [ App (iszero_L, Var "n");
-				      one_L;
-				      apps [ times_L;
-					     Var "n";
-					     App (Var "f",
-						  App (pred_L, Var "n"))]])
+                      one_L;
+                      apps [ times_L;
+                         Var "n";
+                         App (Var "f",
+                          App (pred_L, Var "n"))]])
     
 let fact_L = App (y_L, f_fact_L)
 
@@ -216,16 +241,16 @@ type direction = Left | Right | Stay
 type symbol = string
 
 type 'a tm_desc = { states : 'a list;
-		    input_alph : symbol list;
-  		    tape_alph : symbol list;
-		    leftmost : symbol;
-		    blank : symbol;
-		    delta : (('a * symbol) -> ('a * symbol * direction));
-		    start : 'a;
-		    accept : 'a;
-		    reject : 'a }
+            input_alph : symbol list;
+            tape_alph : symbol list;
+            leftmost : symbol;
+            blank : symbol;
+            delta : (('a * symbol) -> ('a * symbol * direction));
+            start : 'a;
+            accept : 'a;
+            reject : 'a }
 
-	
+    
 module TM : sig
 
   type 'a machine
@@ -233,7 +258,7 @@ module TM : sig
   (* Build Turing machines *)
 
   val build : ('a -> string) -> 'a tm_desc -> 'a machine
-	  
+      
   val build' : string tm_desc -> string machine
 
   (* Execute Turing machines *)
@@ -259,7 +284,7 @@ module TM : sig
   val print_machine : Format.formatter -> 'a machine -> unit
 
 end  = struct
-	
+    
   type 'a machine = M of 'a tm_desc * ('a -> string)
 
   type 'a config = C of (symbol list * 'a * symbol list)
@@ -273,26 +298,26 @@ end  = struct
       Printf.sprintf "delta(%s,%s)" (string_of_state st) sym in
     let tried_delta (st,sym) = 
       try 
-	md.delta (st,sym) 
+    md.delta (st,sym) 
       with _ -> errorTM (Printf.sprintf "%s undefined" (trans st sym)) in
     let checkState st = 
       let checkSym sym = 
-	let (q,s,d) = tried_delta (st,sym) in
-	let _ = checkTrue (List.mem q md.states) 
-	           (Printf.sprintf "%s yields state %s not in states list"
+    let (q,s,d) = tried_delta (st,sym) in
+    let _ = checkTrue (List.mem q md.states) 
+               (Printf.sprintf "%s yields state %s not in states list"
                       (trans st sym) (string_of_state q))  in
-	let _ = checkTrue (List.mem sym md.tape_alph)
-	           (Printf.sprintf "%s yields symbol %s not in tape alphabet"
-		      (trans st sym) s)  in
-	()  in
+    let _ = checkTrue (List.mem sym md.tape_alph)
+               (Printf.sprintf "%s yields symbol %s not in tape alphabet"
+              (trans st sym) s)  in
+    ()  in
       List.iter checkSym md.tape_alph  in
     let checkLeftmost st = 
       checkTrue (match md.delta(st,md.leftmost) with
                  | (_,_,Left) -> false | _ -> true)
-	(Printf.sprintf "%s moves left" (trans st md.leftmost))  in
+    (Printf.sprintf "%s moves left" (trans st md.leftmost))  in
     let checkLoop st sym = 
       checkTrue (match md.delta(st,sym) with (st',_,_) -> st=st')
-	(Printf.sprintf "%s does not loop" (trans st sym))  in
+    (Printf.sprintf "%s does not loop" (trans st sym))  in
     let _ = List.iter checkState md.states  in
     let _ = List.iter checkLeftmost md.states in
     let _ = List.iter (checkLoop md.accept) md.tape_alph  in
@@ -305,23 +330,23 @@ end  = struct
                                        md.input_alph)
                  "input alphabet not included in tape alphabet" in
     let _ = checkTrue (List.mem md.leftmost md.tape_alph)
-	         "leftmost symbol not in tape alphabet"  in
+             "leftmost symbol not in tape alphabet"  in
     let _ = checkTrue (List.mem md.blank md.tape_alph)
-	         "blank symbol not in tape alphabet"  in
+             "blank symbol not in tape alphabet"  in
     let _ = checkTrue (List.for_all (fun x -> String.length x = 1) 
-			                md.input_alph)
-	         "input symbols not all of length 1"  in
+                            md.input_alph)
+             "input symbols not all of length 1"  in
     let _ = checkTrue (List.for_all (fun x -> not (x="")) md.tape_alph)
-	         "tape symbols not nonempty"  in
+             "tape symbols not nonempty"  in
     ()
 
   let check_states md = 
     let _ = checkTrue (List.mem md.start md.states)
               "start state not in states list"  in
     let _ = checkTrue (List.mem md.accept md.states)
-	      "accept state not in states list"  in
+          "accept state not in states list"  in
     let _ = checkTrue (List.mem md.reject md.states)
-	      "reject state not in states list"  in
+          "reject state not in states list"  in
     ()
 
   let build string_of_state md = 
@@ -344,15 +369,15 @@ end  = struct
     let _ = Printf.printf "(%s) " (string_of_state q)  in
     let _ = print_syms v  in
     print_newline ()
-	
+    
   let next md (C (u,q,v) as c) = 
     let rec split_last u = 
       match List.rev u with
-      |	[] -> fail "Moving Left from leftmost tape position"
-      |	x :: xs -> (List.rev xs, x)  in
+      | [] -> fail "Moving Left from leftmost tape position"
+      | x :: xs -> (List.rev xs, x)  in
     let (a,v') = match v with
                  | [] -> (md.blank,[])
-		 | a::v' -> (a,v')  in
+         | a::v' -> (a,v')  in
     match md.delta (q,a) with
     | (q',b,Left) -> let (u',c) = split_last u in C (u',q',c::b::v')
     | (q',b,Right) -> C (u@[b],q',v')
@@ -361,7 +386,7 @@ end  = struct
   let run' f (M (md,ss)) w = 
     let input = List.map Char.escaped (explode w) in
     let _ = checkTrue (List.for_all (fun s -> List.mem s md.input_alph) input)
-	        "Input string uses symbols not in input alphabet"  in
+            "Input string uses symbols not in input alphabet"  in
     let init_tape = md.leftmost::input  in
     let rec loop (C (u,q,v) as c) = 
       let _ = f ss c in 
@@ -372,7 +397,7 @@ end  = struct
 
   let run m w = run' (fun _ _ -> ()) m w
 
-  let run_trace_all m w = run' print_config m w	       
+  let run_trace_all m w = run' print_config m w        
 
   let run_trace_some m states w = 
     let select_print_config string_of_state (C (u,q,v) as c) = 
@@ -384,7 +409,7 @@ end  = struct
   let make_trans_table states symbols delta = 
     let get_trans st = 
       List.fold_right (fun sym r -> ((st,sym),delta(st,sym))::r) 
-	                 symbols []  in
+                     symbols []  in
     List.fold_right (fun st r -> (get_trans st)@r) states []
 
   let machine_trans_table (M (md,_)) = 
@@ -411,22 +436,22 @@ end
  *)
 
 type 'a tm_module = { states_M : 'a list;
-		      delta_M : (('a * symbol) -> ('a * symbol * direction));
-		      start_M : 'a;
-		      accept_M : 'a;
-		      reject_M : 'a }
+              delta_M : (('a * symbol) -> ('a * symbol * direction));
+              start_M : 'a;
+              accept_M : 'a;
+              reject_M : 'a }
 
 type target = ToStart of string | ToAccept | ToReject
 
 type 'a tm_desc_M = { input_alph_M : symbol list;
-		      tape_alph_M : symbol list;
-		      leftmost_M : symbol;
-		      blank_M : symbol;
-		      modules : (string * 'a tm_module * 
-				   (target * target)) list; 
-		      start_module : string ;
-		    }
-		     
+              tape_alph_M : symbol list;
+              leftmost_M : symbol;
+              blank_M : symbol;
+              modules : (string * 'a tm_module * 
+                   (target * target)) list; 
+              start_module : string ;
+            }
+             
 type 'a mod_state = Accept | Reject | Rewind of string | State of string * 'a
 
 
@@ -436,11 +461,55 @@ type 'a mod_state = Accept | Reject | Rewind of string | State of string * 'a
  *
  *)
 
-let make_states m = fail "Function make_states not implemented"
+let make_state name state =
+        State (name, state)
 
-let find_module name m = fail "Function find_module not implemented"
+let rec get_rewinds modules  = match modules with
+    | [] -> []
+    | (name, _, _)::tl -> Rewind name :: get_rewinds tl
 
-let make_delta m = fail "Function make_delta not implemented"
+let make_states m =
+    let combine_states (name,m,_) all_states =
+        let states = List.map (fun state -> make_state name state) m.states_M
+        in
+        states @ all_states
+    in
+    List.fold_right combine_states m.modules [] @ [Accept; Reject] @ get_rewinds m.modules
+
+
+let rec help_find_module name modules = match modules with
+    | [] -> fail "Cannot find module"
+    | (name', m, rules)::tl ->
+        if name' = name then (name', m, rules) else help_find_module name tl
+
+let find_module name m =
+    let (_, m, rules) = help_find_module name m.modules 
+    in m
+
+let find_module_line name m = 
+    help_find_module name m.modules 
+
+let make_delta m = 
+    fun (q, a) -> match q, a with
+        | Accept, a -> (Accept, a, Stay)
+        | Reject, a -> (Reject, a, Stay)
+        | Rewind name, a when a = m.leftmost_M ->
+            let little_machine = find_module name m in
+            (State (name, little_machine.start_M), m.leftmost_M, Stay)
+        | Rewind name, a -> (Rewind name, a, Left)
+        | State (name, state), a ->
+            let (_, little_machine,_) = find_module_line name m in
+            let (little_state, a, dir)= little_machine.delta_M (state, a) in
+            (make_state name little_state, a, dir)
+(*     if state = m.accept_M then match acc with
+        | ToStart machine -> Rewind machine
+        | ToReject -> Reject
+        | ToAccept -> Accept
+    else if state = m.reject_M then match rej with
+        | ToStart machine -> Rewind machine
+        | ToReject -> Reject
+        | ToAccept -> Accept
+    else *)
 
 let build_M string_of_state m = fail "Function build_M not implemented"
 
@@ -455,13 +524,13 @@ let build_M string_of_state m = fail "Function build_M not implemented"
 let mod_as_bs_desc = 
   let delta (q,a) = match q,a with
                     | "start", "a" -> ("start", "a", Right)
-		    | "start", "b" -> ("q1", "b", Right)
-		    | "start", ">" -> ("start", ">", Right)
-		    | "start", "_" -> ("acc", "_", Right)
-		    | "q1", "b" -> ("q1", "b", Right)
-		    | "q1", "_" -> ("acc", "_", Right)
-		    | "acc", sym -> ("acc", sym, Right)
-		    | _, sym -> ("rej", sym, Right)  in
+            | "start", "b" -> ("q1", "b", Right)
+            | "start", ">" -> ("start", ">", Right)
+            | "start", "_" -> ("acc", "_", Right)
+            | "q1", "b" -> ("q1", "b", Right)
+            | "q1", "_" -> ("acc", "_", Right)
+            | "acc", sym -> ("acc", sym, Right)
+            | _, sym -> ("rej", sym, Right)  in
   { states_M = ["start"; "q1"; "acc"; "rej"];
     delta_M = delta;
     start_M = "start";
@@ -506,8 +575,8 @@ let mod_done_desc =
 let mod_anbn_desc = 
   { modules = 
       [ ("asbs", mod_as_bs_desc, (ToStart "done?", ToReject));
-	("done?", mod_done_desc, (ToAccept, ToStart "match_a_b"));
-	("match_a_b", mod_match_a_b_desc, (ToStart "done?", ToReject))];
+    ("done?", mod_done_desc, (ToAccept, ToStart "match_a_b"));
+    ("match_a_b", mod_match_a_b_desc, (ToStart "done?", ToReject))];
     input_alph_M = ["a";"b"];
     tape_alph_M = ["a"; "b"; "X"; "_"; ">"];
     leftmost_M = ">";
