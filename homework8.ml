@@ -498,18 +498,20 @@ let make_delta m =
             (State (name, little_machine.start_M), m.leftmost_M, Stay)
         | Rewind name, a -> (Rewind name, a, Left)
         | State (name, state), a ->
-            let (_, little_machine,_) = find_module_line name m in
-            let (little_state, a, dir)= little_machine.delta_M (state, a) in
-            (make_state name little_state, a, dir)
-(*     if state = m.accept_M then match acc with
-        | ToStart machine -> Rewind machine
-        | ToReject -> Reject
-        | ToAccept -> Accept
-    else if state = m.reject_M then match rej with
-        | ToStart machine -> Rewind machine
-        | ToReject -> Reject
-        | ToAccept -> Accept
-    else *)
+            let (_, little_machine, (acc, rej)) = find_module_line name m in
+
+            if state = little_machine.accept_M then match acc with
+                | ToStart machine -> (Rewind machine, a, Stay)
+                | ToReject -> (Reject, a, Stay)
+                | ToAccept -> (Accept, a, Stay)
+            else if state = little_machine.reject_M then match rej with
+                | ToStart machine -> (Rewind machine, a, Stay)
+                | ToReject -> (Reject, a, Stay)
+                | ToAccept -> (Accept, a, Stay)
+            else
+                let (little_state, a, dir) = little_machine.delta_M (state, a) in
+                (make_state name little_state, a, dir)
+
 
 let build_M string_of_state m = fail "Function build_M not implemented"
 
