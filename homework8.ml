@@ -513,10 +513,27 @@ let make_delta m =
                 (make_state name little_state, a, dir)
 
 
-let build_M string_of_state m = fail "Function build_M not implemented"
+let build_M string_of_state m =
+    let tm =
+    { states = make_states m;
+    input_alph = m.input_alph_M;
+    tape_alph = m.tape_alph_M;
+    leftmost = m.leftmost_M;
+    blank = m.blank_M;
+    delta = make_delta m;
+    start = State (m.start_module, (find_module m.start_module m).start_M);
+    accept = Accept;
+    reject = Reject }
+    in
+    TM.build string_of_state tm 
 
 
-
+let string_of_mod_state st = 
+  match st with
+  | Reject -> "Reject"
+  | Accept -> "Accept"
+  | Rewind m -> String.concat ":" ["Rewind"; m]
+  | State (name, state) -> String.concat ":" [name; state]
 
 (*
  * Sample modular Turing machine accepting {a^nb^n | n>=0}
