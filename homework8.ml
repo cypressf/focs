@@ -3,6 +3,8 @@
  *
  * Lambda Calculus and Modular Turing Machines
  *
+Cypress Frankenfeld
+iamcypress@gmail.com
  *)
 
 
