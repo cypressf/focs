@@ -525,15 +525,13 @@ let build_M string_of_state m =
     accept = Accept;
     reject = Reject }
     in
-    TM.build string_of_state tm 
-
-
-let string_of_mod_state st = 
-  match st with
-  | Reject -> "Reject"
-  | Accept -> "Accept"
-  | Rewind m -> String.concat ":" ["Rewind"; m]
-  | State (name, state) -> String.concat ":" [name; state]
+    let string_of_mod_state = fun mod_state -> match mod_state with
+        | Reject -> "Reject"
+        | Accept -> "Accept"
+        | Rewind name -> String.concat ":" ["Rewind"; name]
+        | State (name, state) -> String.concat ":" [name; string_of_state state]
+    in
+    TM.build string_of_mod_state tm 
 
 (*
  * Sample modular Turing machine accepting {a^nb^n | n>=0}
