@@ -246,7 +246,9 @@ let rec zip s1 s2 =
    fby (head s1, head s2) 
        (fun () -> zip (tail s1) (tail s2))
 
-let add s1 s2 = fail "Function add not implemented"
+let rec add s1 s2 =
+    fby ((head s1) + (head s2))
+       (fun () -> add (tail s1) (tail s2))
 
 let psums s = fail "Function psums not implemented"
 
