@@ -34,15 +34,15 @@ module AbsStream :
   struct
     
     type 'a stream = R of 'a * (unit -> 'a stream)
-	  
+      
     let memoize f = 
       let memoized = ref None in
       let new_f () = 
-	match !memoized with
-	| None -> let result = f () in memoized := Some result; result
-	| Some v -> v   in
+    match !memoized with
+    | None -> let result = f () in memoized := Some result; result
+    | Some v -> v   in
       new_f
-	
+    
     let mk h t = R (h, memoize t) 
     let unmk1 s = let R (h,t) = s in h
     let unmk2 s = let R (h,t) = s in t ()
@@ -240,7 +240,7 @@ let primes = sieve (from 2)
  * 
  *)
 
-let scale n s = fail "Function scale not implemented"
+let scale n = map (fun e -> e * n)
 
 let zip s1 s2 = fail "Function zip not implemented"
 
