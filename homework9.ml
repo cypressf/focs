@@ -277,6 +277,16 @@ let running_max s =
  * 
  *)
 
+let scalef n = map (fun e -> e *. n)
+
+let rec addf s1 s2 =
+    fby ((head s1) +. (head s2))
+       (fun () -> addf (tail s1) (tail s2))
+
+let rec psumsf s = 
+    fby (head s)
+        (fun () -> map (fun x -> x +. (head s)) (psumsf (tail s)))
+
 let arctan z = fail "Function arctan not implemented"
 
 let pi () = fail "Function pi not implemented"
