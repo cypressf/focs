@@ -254,7 +254,11 @@ let rec psums s =
     fby (head s)
         (fun () -> map (fun x -> x + (head s)) (psums (tail s)))
 
-let periodic l = fail "Function periodic not implemented"
+let rec periodic l = match l with
+    | [] -> fail "Function periodic given empty list"
+    | head::tail ->
+        fby head
+        (fun () -> periodic (tail@[head]))
 
 let running_max s = fail "Function running_max not implemented"
 
