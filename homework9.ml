@@ -250,7 +250,9 @@ let rec add s1 s2 =
     fby ((head s1) + (head s2))
        (fun () -> add (tail s1) (tail s2))
 
-let psums s = fail "Function psums not implemented"
+let rec psums s = 
+    fby (head s)
+        (fun () -> map (fun x -> x + (head s)) (psums (tail s)))
 
 let periodic l = fail "Function periodic not implemented"
 
