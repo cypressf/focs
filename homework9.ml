@@ -260,7 +260,15 @@ let rec periodic l = match l with
         fby head
         (fun () -> periodic (tail@[head]))
 
-let running_max s = fail "Function running_max not implemented"
+let running_max s =
+    let rec running_max_helper max s =
+        let Some new_max =
+            if max = None || max < Some (head s) then Some (head s)
+            else max
+        in
+        fby (new_max)
+            (fun () -> running_max_helper (Some new_max) (tail s))
+    in running_max_helper None s
 
 
 
