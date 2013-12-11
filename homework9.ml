@@ -338,16 +338,33 @@ let pi () =
     let tupes = zip (scalef 16. (arctan (1./.5.))) (scalef 4. (arctan (1./.239.))) in
     map (fun (e1, e2) -> e1 -. e2) tupes
 
+
+let newton_step f df x =
+    x -. (f x) /. (df x)
+
+let newton f df guess = 
+    iter guess (newton_step f df)
+
 let derivative_step f x n =
     (f (x +. 1./.n) -. f x) /. (1./.n)
 
 let derivative f x = 
     map (derivative_step f x) (tail natsf)
 
-let newton f df guess = fail "Function newton not implemented"
+let limit_step eps s =
+    if abs_float ((head s) -. (head (tail s))) < eps then
+        true
+    else 
+        false
 
-let limit mx eps s = fail "Function limit not implemented"
-
+let limit mx eps s = 
+    let rec check ns s=
+        if (head ns) = mx then None
+        else if limit_step eps s then
+            Some (head (tail s))
+        else
+            check (tail ns) (tail s)
+    in check (tail nats) s
 
 
 (* 
