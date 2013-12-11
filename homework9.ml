@@ -34,15 +34,15 @@ module AbsStream :
   struct
     
     type 'a stream = R of 'a * (unit -> 'a stream)
-      
+	  
     let memoize f = 
       let memoized = ref None in
       let new_f () = 
-    match !memoized with
-    | None -> let result = f () in memoized := Some result; result
-    | Some v -> v   in
+	match !memoized with
+	| None -> let result = f () in memoized := Some result; result
+	| Some v -> v   in
       new_f
-    
+	
     let mk h t = R (h, memoize t) 
     let unmk1 s = let R (h,t) = s in h
     let unmk2 s = let R (h,t) = s in t ()
@@ -60,11 +60,11 @@ let tail : 'a stream -> 'a stream = AbsStream.unmk2
 let fby : 'a -> (unit -> 'a stream) -> 'a stream = AbsStream.mk
 
 
+
+
+
 (* 
  * Helper functions to print streams 
- *
- * including installing pretty printers in the OCaml shell 
- * for some types of streams
  *
  *)
 
@@ -93,37 +93,74 @@ let string_of_list string_of_a xs =
     | x::xs' -> (string_of_a x)^";"^(loop xs')  in
   "["^(loop xs)
 
-let pp_int_stream ppf s = 
-  Format.fprintf ppf "%s" (string_of_stream string_of_int 10 s)
 
-let pp_float_stream ppf s = 
-  Format.fprintf ppf "%s" (string_of_stream string_of_float 10 s)
 
-let pp_string_stream ppf s = 
-  Format.fprintf ppf "%s" (string_of_stream string_of_string 10 s)
+(*
+ * OCaml shell pretty printers for several types of streams
+ *
+ *)
 
-let pp_int_int_stream ppf s = 
-  Format.fprintf ppf "%s" (string_of_stream string_of_int_int 10 s)
+let pp_stream pp_element n ppf s = 
+  let _ = Format.pp_open_box ppf 3  in
+  let _ = Format.pp_print_string ppf "<"  in
+  let _ = Format.pp_print_space ppf ()  in
+  let rec loop s n = 
+    if n < 0 then ()
+    else begin
+      pp_element ppf (head s);
+      Format.pp_print_string ppf ";";
+      Format.pp_print_space ppf ();
+      loop (tail s) (n - 1)
+    end  in
+  let _ = loop s n  in
+  let _ = Format.pp_print_string ppf "..."  in
+  let _ = Format.pp_print_space ppf ()  in
+  let _ = Format.pp_print_string ppf ">"  in
+  Format.pp_close_box ppf ()
+  
+let pp_string string_of_a ppf a = 
+  Format.pp_print_string ppf (string_of_a a)
 
-let pp_int_string_stream ppf s = 
-  Format.fprintf ppf "%s" (string_of_stream string_of_int_string 10 s)
+let pp_list pp_element ppf a = 
+  let _ = Format.pp_open_box ppf 3  in
+  let _ = Format.pp_print_string ppf "["  in
+  let rec loop a = 
+    match a with 
+    | [] -> Format.pp_print_string ppf "]"
+    | [x] -> (pp_element ppf x ; Format.pp_print_string ppf "]")
+    | x::xs -> (pp_element ppf x ; 
+		Format.pp_print_string ppf ";";
+		Format.pp_print_space ppf ();
+		loop xs)  in
+  let _ = loop a  in
+  Format.pp_close_box ppf ()
 
-let pp_int_stream_stream ppf s = 
-  Format.fprintf ppf "%s" 
-     (string_of_stream (fun x -> (string_of_stream string_of_int 4 x)) 10 s)
+let pp_int_stream = 
+  pp_stream (pp_string string_of_int) 10
 
-let pp_int_int_stream_stream ppf s = 
-  Format.fprintf ppf "%s" 
-     (string_of_stream (fun x -> (string_of_stream string_of_int_int 4 x)) 
-                           10 s)
+let pp_float_stream = 
+  pp_stream (pp_string string_of_float) 10
 
-let pp_int_int_list_stream ppf s = 
-  Format.fprintf ppf "%s"
-     (string_of_stream (string_of_list string_of_int_int) 10 s)
+let pp_string_stream = 
+  pp_stream (pp_string string_of_string) 10
 
-let pp_int_list_stream ppf s = 
-  Format.fprintf ppf "%s"
-     (string_of_stream (string_of_list string_of_int) 10 s)
+let pp_int_int_stream = 
+  pp_stream (pp_string string_of_int_int) 10
+
+let pp_int_string_stream = 
+  pp_stream (pp_string string_of_int_string) 10
+
+let pp_int_stream_stream = 
+  pp_stream (pp_stream (pp_string string_of_int) 4) 10
+
+let pp_int_int_stream_stream = 
+  pp_stream (pp_stream (pp_string string_of_int_int) 4) 10
+
+let pp_int_int_list_stream = 
+  pp_stream (pp_list (pp_string string_of_int_int)) 10
+
+let pp_int_list_stream = 
+  pp_stream (pp_list (pp_string string_of_int)) 10
 
 
 ;; #install_printer pp_int_stream 
@@ -135,7 +172,6 @@ let pp_int_list_stream ppf s =
 ;; #install_printer pp_int_int_list_stream
 ;; #install_printer pp_int_list_stream
 ;; #install_printer pp_string_stream
-
 
 
 
@@ -182,15 +218,21 @@ let rec nth n s =
 
 (* 
  * const k : returns the constant stream of 'k's
+ * iter init incr : returns the stream start with 'init' and incrementing
+ *                    via 'incr'
  * from k : returns the stream of integers starting at 'k'
  * 
  *)
 
 let rec const k = fby k (fun () -> const k)
 
-let rec from k = fby k (fun () -> from (k + 1))
+let rec iter init incr = fby init (fun () -> iter (incr init) incr)
+
+let from k = iter k (fun x -> x + 1)
+let fromf k = iter k (fun x -> x +. 1.)
 
 let nats = from 0
+let natsf = from 0.
 
 (*
  * map f s : returns the stream obtained by applying 'f' 
@@ -240,7 +282,9 @@ let primes = sieve (from 2)
  * 
  *)
 
+
 let scale n = map (fun e -> e * n)
+let scalef n = map (fun e -> e *. n)
 
 let rec zip s1 s2 = 
    fby (head s1, head s2) 
@@ -250,9 +294,17 @@ let rec add s1 s2 =
     fby ((head s1) + (head s2))
        (fun () -> add (tail s1) (tail s2))
 
+let rec addf s1 s2 =
+    fby ((head s1) +. (head s2))
+       (fun () -> addf (tail s1) (tail s2))
+
 let rec psums s = 
     fby (head s)
         (fun () -> map (fun x -> x + (head s)) (psums (tail s)))
+
+let rec psumsf s = 
+    fby (head s)
+        (fun () -> map (fun x -> x +. (head s)) (psumsf (tail s)))
 
 let rec periodic l = match l with
     | [] -> fail "Function periodic given empty list"
@@ -277,16 +329,6 @@ let running_max s =
  * 
  *)
 
-let scalef n = map (fun e -> e *. n)
-
-let rec addf s1 s2 =
-    fby ((head s1) +. (head s2))
-       (fun () -> addf (tail s1) (tail s2))
-
-let rec psumsf s = 
-    fby (head s)
-        (fun () -> map (fun x -> x +. (head s)) (psumsf (tail s)))
-
 let arctan z = fail "Function arctan not implemented"
 
 let pi () = fail "Function pi not implemented"
@@ -304,5 +346,10 @@ let limit mx eps s = fail "Function limit not implemented"
  * 
  *)
 
+let table s1 s2 = fail "Function table not implemented"
 
-(* Coming soon *)
+let stripes s = fail "Function stripes not implemented"
+
+let flatten s = fail "Function flatten not implemented"
+
+let pairs s1 s2 = fail "Function pairs not implemented"
