@@ -232,7 +232,7 @@ let from k = iter k (fun x -> x + 1)
 let fromf k = iter k (fun x -> x +. 1.)
 
 let nats = from 0
-let natsf = from 0.
+let natsf = fromf 0.
 
 (*
  * map f s : returns the stream obtained by applying 'f' 
@@ -328,8 +328,11 @@ let running_max s =
  * QUESTION 2
  * 
  *)
+let arctan_sum z n =
+   (-1.0 ** n) *. (z**(2.*.n+.1.))/.(2.*.n +.1.)
 
-let arctan z = fail "Function arctan not implemented"
+let arctan z = 
+    psumsf (map (arctan_sum z) natsf)
 
 let pi () = fail "Function pi not implemented"
 
