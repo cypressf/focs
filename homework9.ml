@@ -390,9 +390,12 @@ let rec stripe_step s stream_stream =
 let stripes s = 
     stripe_step (head s) (tail s)
 
-    
-
-
-let flatten s = fail "Function flatten not implemented"
+let rec flatten s = 
+    let rec flatten_step l = match l with
+    | [] -> flatten (tail s)
+    | hd::tl ->
+        fby (hd)
+            (fun () -> flatten_step tl)
+    in flatten_step (head s)
 
 let pairs s1 s2 = fail "Function pairs not implemented"
