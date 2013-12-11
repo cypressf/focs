@@ -334,11 +334,16 @@ let arctan_sum z n =
 let arctan z = 
     psumsf (map (arctan_sum z) natsf)
 
-let pi () = fail "Function pi not implemented"
+let pi () = 
+    let tupes = zip (scalef 16. (arctan (1./.5.))) (scalef 4. (arctan (1./.239.))) in
+    map (fun (e1, e2) -> e1 -. e2) tupes
 
-let newton f df guess = fail "Function newton not implemented"
+let derivative_step f x n =
+    (f (x +. 1.) -. f x) /. (1./.n)
 
 let derivative f x = fail "Function derivative not implemented"
+
+let newton f df guess = fail "Function newton not implemented"
 
 let limit mx eps s = fail "Function limit not implemented"
 
