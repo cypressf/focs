@@ -398,4 +398,7 @@ let rec flatten s =
             (fun () -> flatten_step tl)
     in flatten_step (head s)
 
-let pairs s1 s2 = fail "Function pairs not implemented"
+let pairs s1 s2 = 
+    let t = table s1 s2 in
+    let st = stripes t in
+    flatten st
