@@ -339,9 +339,10 @@ let pi () =
     map (fun (e1, e2) -> e1 -. e2) tupes
 
 let derivative_step f x n =
-    (f (x +. 1.) -. f x) /. (1./.n)
+    (f (x +. 1./.n) -. f x) /. (1./.n)
 
-let derivative f x = fail "Function derivative not implemented"
+let derivative f x = 
+    map (derivative_step f x) (tail natsf)
 
 let newton f df guess = fail "Function newton not implemented"
 
