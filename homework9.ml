@@ -372,9 +372,26 @@ let limit mx eps s =
  * 
  *)
 
-let table s1 s2 = fail "Function table not implemented"
+let rec table_step e1 s2 =
+    map (fun e2 -> (e1, e2)) s2
 
-let stripes s = fail "Function stripes not implemented"
+let rec table s1 s2 =
+    map (fun e1 -> table_step e1 s2) s1
+
+
+let rec special_zip s1 s2 = 
+   fby (head s1 :: head s2) 
+       (fun () -> special_zip (tail s1) (tail s2))
+
+let rec stripe_step s stream_stream = 
+    fby [(head s)]
+        (fun () -> special_zip (tail s) (stripe_step (head stream_stream) (tail stream_stream)))
+
+let stripes s = 
+    stripe_step (head s) (tail s)
+
+    
+
 
 let flatten s = fail "Function flatten not implemented"
 
