@@ -3,6 +3,10 @@
  *
  * Streams
  *
+Cypress Frankenfeld
+iamcypress@gmail.com
+
+I collaborated with Keely and Julian on this homework.
  *)
 
 
